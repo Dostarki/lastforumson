@@ -10,7 +10,7 @@
 | X_REPOST_TEXT / X_REPOST_LINK | RT görevinin metni ve bağlantısı |
 | X_COMMENT_TEXT / X_COMMENT_LINK | Yorum görevinin görünen metni ve yanıt bağlantısı |
 | X_COMMENT_MESSAGE | X yorum penceresinde önceden yazılan mesaj |
-| X_SHARE_TEXT / X_SHARE_LINK | POST ON X paylaşım metni ve X paylaşım adresi (intent); metnin altına yalnızca X_LIKE_LINK eklenir |
+| X_SHARE_TEXT / X_SHARE_LINK | POST ON X paylaşım metni ve X paylaşım adresi (intent); metnin altına X_LIKE_LINK, en alta katılımcının referans bağlantısı (PUBLIC_APP_URL/?ref=KOD) eklenir |
 | PUBLIC_APP_URL | Kart ve referans bağlantılarının uygulama adresi |
 
 Görev bağlantı davranışı: SIGNAL (Like) X_LIKE_LINK'i açar; RELAY (Repost) da aynı X_LIKE_LINK'i açar; VOICE (Reply) X post bestecisini X_COMMENT_MESSAGE metniyle açar ve altına X_LIKE_LINK eklenir.

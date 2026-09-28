@@ -8,5 +8,10 @@ export const errorMessage = (error) => {
   return 'The signal was interrupted. Please try again.';
 };
 export const numberLabel = (number) => number ? `#${String(number).padStart(5, '0')}` : '#-----';
-// The backend builds the full composer URL: share text + the like link only.
-export const shareUrl = (config) => config.share_url;
+// The backend builds the composer text (share text + like link); the agent's
+// referral link is appended below via the url param.
+export const shareUrl = (config, agent) => {
+  const url = new URL(config.share_url);
+  url.searchParams.set('url', `${config.public_url}/?ref=${agent.ref_code}`);
+  return url.toString();
+};

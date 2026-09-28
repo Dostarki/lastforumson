@@ -77,12 +77,13 @@ def test_config_returns_allowlisted_public_fields(api_client):
     assert len(data['comment_message']) > 0
     assert data['x_profile_url'] == 'https://x.com/LastZhood'
 
-    # POST ON X composer carries the share text with only the like link below it.
+    # POST ON X composer carries the share text with the like link below it;
+    # the referral link is appended by the frontend as the url param.
     share_parsed = urlparse(data["share_url"])
     share_query = parse_qs(share_parsed.query)
     assert '/intent/post' in share_parsed.path
-    assert share_query["text"][0] == data["share_text"]
-    assert share_query["url"][0] == like_task["url"]
+    assert share_query["text"][0] == f'{data["share_text"]}\n\n{like_task["url"]}'
+    assert "url" not in share_query
 
     response_text = response.text.lower()
     assert "mongo_url" not in response_text

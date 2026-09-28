@@ -38,9 +38,10 @@ def public_config():
     origin = values['PUBLIC_APP_URL'].rstrip('/')
     if urlparse(origin).scheme not in {'https', 'http'}:
         raise ValueError('PUBLIC_APP_URL must be an absolute HTTP(S) URL.')
-    # POST ON X composer: share text with only the like link below it.
+    # POST ON X composer: share text with the like link below it; the frontend
+    # appends the agent's referral link (PUBLIC_APP_URL/?ref=CODE) as the url param.
     share_parts = urlparse(checked_x_url(values['X_SHARE_LINK']))
-    share_url = urlunparse(share_parts._replace(query=urlencode({'text': values['X_SHARE_TEXT'], 'url': like_link})))
+    share_url = urlunparse(share_parts._replace(query=urlencode({'text': f"{values['X_SHARE_TEXT']}\n\n{like_link}"})))
     return PublicConfig(tasks=tasks, x_profile_url=checked_x_url(values['X_PROFILE_LINK']),
                         comment_message=values['X_COMMENT_MESSAGE'], share_text=values['X_SHARE_TEXT'],
                         share_url=share_url, public_url=origin)

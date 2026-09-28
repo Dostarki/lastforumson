@@ -109,3 +109,9 @@ Tasarım renk konusuna gelirsek eğer daha böyle project zomboid oyun tarzı ol
 - Frontend lib/api.js shareUrl artık config.share_url değerini doğrudan döndürüyor; ajan ve ref linkleri paylaşım metninden kaldırıldı.
 - Testler güncellendi: repost==like linki, comment text==comment_message ve url==like linki, share_url tek url paramı doğrulanıyor; 20/20 pytest geçti.
 - Avatar testi güncellendi: @LastZhood artık özel profil fotoğrafına sahip; test canlı hesap durumunu (available/unavailable) ve var olmayan handle fallback'ini doğruluyor.
+
+## POST ON X referans linki eklendi — 2026-09-28
+- Kullanıcı isteği: POST ON X bestecisinde metin + X_LIKE_LINK altına lastzhood.fun referans linki gelsin.
+- PUBLIC_APP_URL .env icinde https://lastzhood.fun olarak guncellendi (kart ve davet linkleri de bu alan adini kullanir).
+- Backend share_url: text = X_SHARE_TEXT + bosluk + X_LIKE_LINK; url parami birakilmadi. Frontend shareUrl, url paramina PUBLIC_APP_URL/?ref=KOD degerini ekler; X bestecisinde en altta referans linki gorunur.
+- Testler guncellendi, 13/13 registry pytest + shareUrl node dogrulamasi gecti.
