@@ -1,142 +1,124 @@
 {
-  "project_title": "LastZhood - Project Zomboid Survival Edition",
-  "current_brand": "LastZhood",
-  "official_x": "https://x.com/LastZhood",
-  "status": "APPROVED_CONCEPT_2",
-  "selected_concept": "concept_2",
-  "overview": "agnt.trade web sitesinin birebir işlevsel yapısını (X handle katılımı, 4 aşamalı görev konsolu, EVM cüzdan bağlama, Ajan Lisansı kartı üretimi, referans kodu paylaşımı ve MongoDB veri tabanı kaydı) muhafaza ederken, Project Zomboid atmosferinden ilham alan 3 farklı görsel konsept sunulmaktadır.",
-  "original_structure_retained": {
-    "hero_section": {
-      "header": "Sol üst markalama (agnt.trade logo), sağ üst canlı Ajan Sayacı (SPAWNED AGENTS) ve ERKEN ERİŞİM rozeti.",
-      "headline": "agnt.trade - MARKETS, RUN BY AGENTS",
-      "terminal_intro": "> WAKE UP, AN AGENT LIVES HERE.",
-      "input_form": "$ spawn --owner @your_x_handle ve [CONNECT X] butonu",
-      "micro_copy": "public profile only · no password · no DMs",
-      "ticker": "En alt bantta 'JUST SPAWNED' başlığı altında canlı akan son katılan ajanlar (@kullanici #12913)"
+  "project_title": "LastZhood Admin Panel - Tactical Settings Dashboard",
+  "app_type": "dashboard",
+  "route": "/admin",
+  "file_type": "JavaScript (.js / .jsx)",
+  "language": "Turkish (UI copy in Turkish)",
+  "design_system": {
+    "font_families": {
+      "heading": "Barlow Condensed, sans-serif",
+      "body_and_mono": "IBM Plex Mono, monospace"
     },
-    "mission_console": {
-      "license_card": "Agent License #---- (Cell, Class, Tier bilgileri, [Copy image] ve [Save] butonları)",
-      "task_stepper": [
-        "01 · INITIALIZATION (X Handle Bağlantısı)",
-        "02 · TASKS (0/4 Görev: .env dosyasından çekilen X Takip, RT, Yorum metinleri ve bağlantıları)",
-        "03 · WALLET (EVM Cüzdan Adresi ve [BIND] butonu)",
-        "04 · CLAIM (Erken Erişim İddiası, X'te Paylaşım, Kart İndirme, Ref Kodu)"
-      ],
-      "agent_live_state": "POST ON X · SAVE CARD · COPY REF CODE · YOUR REF CODE"
+    "colors": {
+      "ink": "#11150f",
+      "paper": "#e3e4d7",
+      "muted_ink": "#969c89",
+      "yellow": "#dcc475",
+      "sage": "#9cac8c",
+      "red": "#a85e51",
+      "border_line": "#6f79553b",
+      "card_bg": "#0d120ccd",
+      "card_border": "#a8b28140",
+      "status_saved": "#9cac8c",
+      "status_unsaved": "#dcc475"
+    },
+    "layout": {
+      "wrapper": "board-shell containing MapAtmosphere background layer",
+      "container_max_width": "max-w-4xl mx-auto px-4 py-8",
+      "card_style": "border border-[#a8b28140] bg-[#0d120ccd] p-6 shadow-xl backdrop-blur-md"
     }
   },
-  "concepts": [
+  "authentication": {
+    "type": "Password-only",
+    "credential_source": "backend/.env ADMIN_PASSWORD; bcrypt hash in MongoDB",
+    "session": "HttpOnly Secure cookies with revocable MongoDB sessions; no local/sessionStorage tokens",
+    "login_flow": "If session is missing or invalid, show password-only login within board-shell"
+  },
+  "admin_fields": [
     {
-      "id": "concept_1",
-      "name_tr": "Kıyamet Sonrası Yeşil CRT Terminali (Post-Apocalyptic CRT Terminal)",
-      "vibe": "Project Zomboid'in sığınak içi eski radyo/bilgisayar ekranı. Yeşil katot tüplü (CRT) matris ızgarası, titreyen fosfor ışığı, piksel gürültüsü ve bozulmuş radar efektleri.",
-      "colors": {
-        "background": "#0A0F0A (Derin Zomboid Gecesi Siyahı)",
-        "surface": "#121E13 (Karanlık Terminal Kasası)",
-        "primary": "#39FF14 (Zehir Yeşil Fosfor Glow)",
-        "secondary": "#A3E635 (Taktik Koyu Sarı/Yeşil)",
-        "accent_warning": "#FF3300 (Kan Kırmızı Uyanış & Alarm)",
-        "text_main": "#D0FCD0 (Monokrom Yeşil Terminal Metni)",
-        "text_muted": "#4B724B (Soluk Yeşil Kod)",
-        "border": "#1E3A1F (1px Yeşil CRT Izgarası)"
-      },
-      "typography": {
-        "heading": "VT323 / Share Tech Mono (Retro Terminal)",
-        "body": "JetBrains Mono / Courier Prime (Monospace Taktik Kod)",
-        "accents": "Silkscreen / Press Start 2P (Piksel İkazlar)"
-      },
-      "visual_enhancers": [
-        "Scanline overlay (CRT tarama çizgileri efekti)",
-        "Canlı hücre ızgarası (Grid cells) yeşil renkte parıldayan ve hareket eden ajan hücreleri",
-        "Piksel paraziti (Noise texture) ve ekran kenarı kararması (Vignette)",
-        "Glitch animasyonlu buton odaklanmaları"
-      ],
-      "mockup_image_prompt": "UI design mockup of a post-apocalyptic survival computer terminal inspired by Project Zomboid. Dark CRT monitor screen with dark green phosphor background grid, glowing bright green matrix text reading 'agnt.trade - MARKETS, RUN BY AGENTS', retro command prompt '$ spawn --owner @handle', tactical survival UI panels, scanlines effect, blood red warning indicator light, ultra detailed digital interface preview, 8k display."
+      "key": "like_url",
+      "label": "Like bağlantısı",
+      "type": "url",
+      "placeholder": "https://x.com/...",
+      "test_id": "admin-like-url-input"
     },
     {
-      "id": "concept_2",
-      "name_tr": "Yıpranmış Hayatta Kalma Panosu (Worn Survival Desk Board)",
-      "vibe": "Knox County harita masası, yıpranmış deri/tahta dokusu, paslı metal klipsler, bantla yapıştırılmış taktik notlar, kan lekesi detayları ve stensil askeri mühürler.",
-      "colors": {
-        "background": "#14110F (Yabani Ahşap & Kömür Tonu)",
-        "surface": "#241E19 (Yıpranmış Deri & Harita Masası)",
-        "primary": "#E2B13C (Paslı Kehribar Sarı)",
-        "secondary": "#D96B27 (Ateş ve Pas Turuncusu)",
-        "accent_warning": "#8B0000 (Kurumuş Kan Kırmızısı)",
-        "text_main": "#E6DBC9 (Kirlenmiş Kağıt Krem Rengi)",
-        "text_muted": "#8C7B6B (Kömür Rengi İkincil Metin)",
-        "border": "#3D3126 (Stensil Ahşap & Metal Kenarlık)"
-      },
-      "typography": {
-        "heading": "Barlow Condensed Heavy / Stencil (Askeri Saha Kodları)",
-        "body": "Special Elite / Courier Prime (Daktilo Harita Notları)",
-        "accents": "Oswald / Permanent Marker (El Yazısı Taktik Notlar)"
-      },
-      "visual_enhancers": [
-        "Gritty paper texture & wood background depth",
-        "Sarı taktik bantlar (Duct tape effect) ve metal klips çerçeveleri",
-        "Stensil mühürler (CONFIDENTIAL / SURVIVOR LICENSE)",
-        "Hafif kan lekesi & pas dokusu kaplaması"
-      ],
-      "mockup_image_prompt": "UI design mockup of a gritty survival commander board inspired by Project Zomboid. Weathered dark wood and leather desk texture background, worn paper index cards taped with yellow duct tape, stencil typography for 'agnt.trade MARKETS RUN BY AGENTS', amber and rust orange action buttons, survivor agent license card pinned to board, blood stain accent, tactical emergency map grid, ultra realistic web UI preview."
+      "key": "repost_url",
+      "label": "Repost (Retweet) Bağlantısı",
+      "type": "url",
+      "placeholder": "https://x.com/...",
+      "test_id": "admin-repost-url-input"
     },
     {
-      "id": "concept_3",
-      "name_tr": "Retro Askerî Radar Arayüzü (Cold War Radar & Tactical UI)",
-      "vibe": "Soğuk savaş dönemi askeri komuta merkezi ekranı. Kehribar/turuncu radar taraması, koyu çelik gri şasi, yüksek kontrastlı veri göstergeleri ve gizli belge damgaları.",
-      "colors": {
-        "background": "#0D0D11 (Derin Sığınak Çeliği)",
-        "surface": "#16171F (Taktik Ekran Şasisi)",
-        "primary": "#FF9900 (Kehribar Radar Turuncusu)",
-        "secondary": "#FFC107 (Askeri Uyarı Sarısı)",
-        "accent_warning": "#DC3545 (Kritik Tehdit Kırmızısı)",
-        "text_main": "#FFF5E6 (Yüksek Kontrastlı Turuncu-Beyaz)",
-        "text_muted": "#7A7F93 (Çelik Gri Metin)",
-        "border": "#2B2D3A (1px Taktik Çelik Izgara Çizgisi)"
-      },
-      "typography": {
-        "heading": "Chivo Mono / Space Mono (Askeri Radar Başlıkları)",
-        "body": "IBM Plex Mono (Hassas Veri Gösterimi)",
-        "accents": "Barlow / Orbitron (Sistem Koordinatları)"
-      },
-      "visual_enhancers": [
-        "Dönen radar tarama efekti (Radar sweep canvas background)",
-        "Köşe koordinat işaretçileri (Crosshair / Target Reticle markers)",
-        "CLASSIFIED / TOP SECRET damga katmanları",
-        "Keskin dik açılı, kartuş tipi butonlar ve metal vida detayları"
-      ],
-      "mockup_image_prompt": "UI design mockup of a retro Cold War military tactical radar interface inspired by Project Zomboid. Dark slate steel chassis background, amber orange radar sweep graphics, crisp grid reticles, stencil text 'agnt.trade - AGENT SPAWN CONSOLE', metallic dark grey command boxes, orange highlighted input field, military classification stamps, sleek 1980s bunker tech aesthetics."
+      "key": "reply_url",
+      "label": "Reply (Yanıt) Bağlantısı",
+      "type": "url",
+      "placeholder": "https://x.com/...",
+      "test_id": "admin-reply-url-input"
+    },
+    {
+      "key": "reply_text",
+      "label": "Reply (Yanıt) İçerisinde Yazılacak Metin",
+      "type": "textarea",
+      "placeholder": "Örn: @LastZhood Ajan Yetkilendirmesi Başlatıldı...",
+      "test_id": "admin-reply-text-input"
+    },
+    {
+      "key": "claim_text",
+      "label": "CLAIM ON X Paylaşım Metni",
+      "type": "textarea",
+      "placeholder": "Örn: LastZhood Erken Erişim Ajan Lisansımı Talep Ettim...",
+      "test_id": "admin-claim-text-input"
     }
   ],
-  "technical_specifications": {
-    "frontend": {
-      "framework": "React.js (Tailwind CSS, Framer Motion, Lucide Icons, Sonner Toast)",
-      "data_test_id": "Tüm etkileşimli elemanlara eklenme zorunluluğu var (örn: data-testid='connect-x-button')",
-      "accessibility": "Contrast Ratio min 4.5:1, keyboard focus outline, prefers-reduced-motion desteği"
+  "api_endpoints": {
+    "login": {
+      "method": "POST",
+      "path": "/api/admin/login",
+      "payload": "{ \"password\": \"string\" }",
+      "response": "{ \"authenticated\": true }; HttpOnly cookies"
     },
-    "backend": {
-      "db": "MongoDB (Mongoose ODM / PyMongo)",
-      "environment_variables": [
-        "MONGODB_URI",
-        "X_FOLLOW_TEXT",
-        "X_FOLLOW_LINK",
-        "X_REPOST_TEXT",
-        "X_REPOST_LINK",
-        "X_COMMENT_TEXT",
-        "X_COMMENT_LINK"
-      ],
-      "api_routes": [
-        "GET /api/config - Public X mission links and texts from .env",
-        "POST /api/agents/spawn - Create/claim agent with X handle & optional EVM wallet",
-        "GET /api/agents/recent - Recent 20 spawned agents ticker list",
-        "GET /api/agents/stats - Total agent count for top header indicator"
-      ]
+    "get_config": {
+      "method": "GET",
+      "path": "/api/admin/settings",
+      "credentials": "include (HttpOnly cookies)",
+      "response": "{ settings: {like_url, repost_url, reply_text, reply_url, claim_text}, revision, updated_at }"
+    },
+    "save_config": {
+      "method": "PUT",
+      "path": "/api/admin/settings",
+      "credentials": "include (HttpOnly cookies); validated Origin",
+      "payload": "{ like_url, repost_url, reply_text, reply_url, claim_text, revision }",
+      "response": "{ settings, revision, updated_at }"
     }
   },
+  "key_features": [
+    "Parola Korumalı Yönetici Girişi",
+    "Görev Linkleri ve Metinlerinin Canlı Yönetimi",
+    "Kaydedilmiş / Kaydedilmemiş Değişiklik Durum Göstergesi (Unsaved/Saved status)",
+    "Tek Tıkla Ayarları Kaydetme (Save Button)",
+    "Güvenli Oturum Kapatma (Logout)",
+    "Mevcut Halk Açık Sitenin (/ Console / Home) Etkilenmeden Çalışmaya Devam Etmesi"
+  ],
+  "testing_attributes": {
+    "login_card": "admin-login-panel",
+    "password_input": "admin-password-input",
+    "login_button": "admin-login-button",
+    "login_error": "admin-login-error",
+    "header": "admin-header",
+    "logout_button": "admin-logout-button",
+    "save_button": "admin-save-button",
+    "status_badge": "admin-save-status"
+  },
   "instructions_for_main_agent": [
-    "Kullanıcı 3 görsel konseptten birini seçtikten sonra uygulamayı kodlamaya başlayın.",
-    "Tüm backend konfigürasyonlarını (X görev linkleri & metinleri) .env'den okuyacak şekilde ayarlayın.",
-    "Orijinal agnt.trade üzerindeki tüm bileşenleri (Canlı hücre gridi, X kilitlenme ekranı, Ajan Lisans Kartı, Ref link paylaşımı) seçilen tema doğrultusunda giydirin.",
-    "Bütün interactive buton ve form elemanlarına kebab-case `data-testid` verin."
+    "Create or update React admin component under frontend/src/pages/Admin.js or Admin.jsx",
+    "Ensure backend endpoint /api/admin/settings updates the configuration served to public users via /api/config",
+    "Keep existing site functionality and public layout intact",
+    "Add kebab-case data-testid attributes to all form controls, buttons, and status indicators"
+  ],
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
+    "Use 2-3x generous spacing for tactical clarity.",
+    "Ensure high contrast on all input text and buttons against dark green/brown map background.",
+    "Include data-testid on every interactive element."
   ]
 }

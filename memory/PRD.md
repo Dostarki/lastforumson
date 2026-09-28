@@ -18,7 +18,7 @@ Tasarım renk konusuna gelirsek eğer daha böyle project zomboid oyun tarzı ol
 
 ## Kullanıcı profili
 - X kampanyası katılımı ve erken erişim kaydı yapmak isteyen ziyaretçi.
-- Takip, RT ve yorum metinleri/bağlantılarını .env üzerinden düzenlemek isteyen site sahibi.
+- Like, Repost, Reply metin/linkleri ve paylaşım metnini şifreli admin panelinden düzenlemek isteyen site sahibi. Takip ve diğer altyapı ayarları .env içinde kalır.
 
 ## Uygulanan mimari
 - React arayüz, FastAPI API, MongoDB kalıcılığı.
@@ -72,9 +72,9 @@ Tasarım renk konusuna gelirsek eğer daha böyle project zomboid oyun tarzı ol
 3. Askerî radar: https://static.prod-images.emergentagent.com/jobs/a2dcf251-5c25-48b6-bb5b-fcddb74891ae/images/c9cae18d6079489b15507949c8af294fb5a9048846f31441f8c714d0df2fbf71.jpeg
 
 ## Önceliklendirilmiş kalan işler
-- P0: Yok; çekirdek akış, LastZhood isim güncellemesi ve anahtarsız X profil fotoğrafı tamamlandı.
-- P1 (isteğe bağlı kampanya girdisi): Kullanıcı belirli gönderi bağlantısı paylaşırsa beğeni/RT/yorum görevlerini o gönderiye yönlendirmek. Şimdiki profil akışı kullanılabilir durumdadır.
-- P2 önerileri (henüz kullanıcı istemedi): Referans davet sıralaması; hayatta kalma temalı farklı ajan portreleri; Türkçe/İngilizce dil seçimi.
+- P0: Yok; şifreli admin paneli dahil istenen akışlar tamamlandı ve doğrulandı.
+- P1: Kullanıcının `/admin` paneline girip gerçek kampanya bağlantılarını/metinlerini kaydederek kendi kontrolünü yapması; kullanıcı doğrulaması bekleniyor.
+- P2 (henüz istenmedi): Panelde paylaşım önizlemesi ve şifre değiştirme; referans davet sıralaması; dil seçimi.
 
 ## X profil fotoğrafı — 2026-07-19
 - Kullanıcı adıyla CONNECT X üzerinden devam edilince gerçek herkese açık profil fotoğrafı sorgulanıyor. Yükleme durumu gösterilir; sorgu başarısız olsa da konsola geçiş engellenmez.
@@ -115,3 +115,33 @@ Tasarım renk konusuna gelirsek eğer daha böyle project zomboid oyun tarzı ol
 - PUBLIC_APP_URL .env icinde https://lastzhood.fun olarak guncellendi (kart ve davet linkleri de bu alan adini kullanir).
 - Backend share_url: text = X_SHARE_TEXT + bosluk + X_LIKE_LINK; url parami birakilmadi. Frontend shareUrl, url paramina PUBLIC_APP_URL/?ref=KOD degerini ekler; X bestecisinde en altta referans linki gorunur.
 - Testler guncellendi, 13/13 registry pytest + shareUrl node dogrulamasi gecti.
+
+## Şifreli admin paneli — 2026-09-28
+
+### Son kullanıcı isteği (önceki .env düzenleme davranışının yerine geçer)
+"Şuna bir admin panel yap işin içinden çıkamadım. admin panele şifre ile giriş yapılsın. Probaba4488 olsun şimdilik. Basılan butonların linklerini belirleyip save alabilelim. Like Repost Reply deki yazılacak metin ve link CLAIM ON X içeriğinde yazacak metni"
+
+Onay: "Evet sadece admin panelden çekecek o bilgileri."
+
+### Uygulananlar
+- `/admin`: Türkçe, mevcut LastZhood harita/pano tasarımıyla şifreli giriş ve kampanya ayarları. Like URL, ayrı Repost URL, Reply metni ve ayrı URL, CLAIM ON X paylaşım metni; tek Kaydet düğmesi, kayıt durumu/zamanı, çıkış, hata/yeniden deneme, kaydedilmemiş değişiklik uyarısı.
+- Yönetilen beş alan **yalnızca MongoDB `campaign_settings` içindeki panel kaydından** okunur. `.env` eski aktif değerleri ilk açılışta bir kez taşır; sonraki istek/yeniden başlatma/admin kaydında `.env` bu alanların üzerine yazamaz. Başlangıç Like/Repost/Reply hedefleri eski davranışı korur, artık bağımsız kaydedilebilir.
+- Public `/api/config` her çağrıda DB okur; açık ziyaretçi sekmesi tekrar odaklanınca güncel ayarları alır. Follow bağlantısı, görev başlık/açıklamaları, X besteci altyapısı ve PUBLIC_APP_URL gibi kapsam dışı alanlar .env içinde kaldı.
+- POST ON X (kullanıcının CLAIM ON X dediği mevcut paylaşım düğmesi) biçimi korunur: panel paylaşım metni + panel Like URL + `PUBLIC_APP_URL/?ref=KOD`. Reply bestecisi panel Reply metni + kendi URL'siyle açılır.
+- Şifre yalnızca sunucu ortamında; bcrypt hash MongoDB'de. JWT access (15dk) ve refresh (7gün) HttpOnly/Secure/SameSite=None çerezleri `/api/admin` yoluna sınırlı; MongoDB oturum kaydı + TTL, çıkışta sunucu tarafında iptal. İstemci kodunda/depolamasında şifre veya token yok. Test bilgileri `memory/test_credentials.md`.
+- Origin izin listesi / CSRF kontrolü, tek yönetici hesabına yönelik MongoDB atomik 5 deneme / 15dk sınırı, girdi boyutu/HTTPS X URL doğrulaması. Ayar sürümü (`revision`) ile eşzamanlı eski kaydın yenisini ezmesi 409 ile engellenir.
+
+### Mimari ve dosyalar
+- Yeni backend: `campaign.py` (Pydantic ayar/sürüm modelleri, ilk aktarım, DB okuma), `admin_security.py` (hash, oturum, deneme sınırı), `admin.py` (giriş/ayar API).
+- Yeni koleksiyonlar: `campaign_settings` (`_id=x-campaign`, settings, revision, updated_at); `admin_users` (`_id=admin`, password_hash, role); `admin_sessions` (session_id, admin_id, expires_at); `admin_login_attempts` (hesap/pencere anahtarı, count, expires_at). Public yanıtlar `_id`/hash/token içermez.
+- Yeni API: POST `/api/admin/login`, GET `/api/admin/me`, POST `/api/admin/refresh`, POST `/api/admin/logout`, GET/PUT `/api/admin/settings`.
+- Frontend: `pages/Admin.jsx`, `components/admin/{AdminLogin,CampaignFields,CampaignForm}.jsx`, `lib/adminApi.js`, `admin.css`. `/admin` public katılım verileri yüklenmeden bağımsız çalışır.
+- `.env`: `ADMIN_PASSWORD`, `JWT_SECRET`, açık `CORS_ORIGINS` listesi. Önizleme ara sunucusunun dönüştürdüğü origin de izin listesine eklendi; yabancı/eksik Origin hâlâ reddediliyor. Korunan MongoDB/frontend ortam anahtarları değiştirilmedi.
+
+### Doğrulama
+- Test ajanı raporu: `test_reports/iteration_4.json`. Bulunan giriş sınırlama hatası (ara sunucu IP değişimi) hesap bazlı sayaçla düzeltildi. Hedef test **1/1**, tüm backend testleri **34/34** geçti. Son JUnit: `test_reports/pytest/admin_final_results.xml`.
+- Giriş/yanlış şifre, çerez yenileme/çıkış/tekrar kullanım engeli, beş alan kalıcılığı, farklı URL'lerin gerçek UI'ya yansıması, Türkçe/emoji/çok satır, kayıt hatası/409 kurtarma, mevcut kayıt ve POST ON X/referans akışı doğrulandı.
+- İlk yüklemede bağlantı hatası için test-only 503 ile hata + Tekrar dene + başarılı yeniden giriş doğrulandı. 409 sonrası tekrar düzenlerken kurtarma düğmesinin kaybolması ayrıca giderildi.
+- Masaüstü 1920×800 ve mobil 390×844 görüntülendi, yatay taşma yok. Test ajanı 320/768/1024/1440 genişlik ölçümlerini de geçti. `yarn build` başarılı.
+- Test kayıtları temizlendi ve özgün kampanya değerleri korundu. Üretim akışında MOCK yok; testlerin hata senaryolarında kontrollü yanıtlar kullanıldı. X'te gerçek sosyal işlem yapılmadı; kullanıcı beyanı modeli değişmedi.
+- Kapanış doğrulama: `test_reports/admin_final_verification.md`. Bilinen açık çekirdek hata yok; kullanıcının panel denemesi bekleniyor.

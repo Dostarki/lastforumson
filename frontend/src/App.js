@@ -7,6 +7,7 @@ import { api } from './lib/api';
 import Home from './pages/Home';
 import Console from './pages/Console';
 import PublicAgent from './pages/PublicAgent';
+import Admin from './pages/Admin';
 import './App.css';
 import './branding.css';
 
@@ -26,6 +27,12 @@ function Experience() {
   }, []);
   useEffect(() => { load(); }, [load]);
   useEffect(() => {
+    const refresh = () => { if (document.visibilityState === 'visible') load(); };
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => { window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh); };
+  }, [load]);
+  useEffect(() => {
     if (!incomingRef) return;
     let active = true;
     api.get(`/agents/${encodeURIComponent(incomingRef)}`).then(({ data }) => {
@@ -38,4 +45,4 @@ function Experience() {
   return <><BoardLayout stats={stats} recent={recent} online={!!stats && !loadError} config={config}><Routes><Route path="/" element={<Home participation={participation} config={config} loadError={loadError} retry={load} />} /><Route path="/console" element={<Console participation={participation} config={config} refresh={load} loadError={loadError} retry={load} />} /><Route path="/agent/:refCode" element={<PublicAgent config={config} />} /><Route path="*" element={<PublicAgent notFound config={config} />} /></Routes></BoardLayout><Toaster position="bottom-right" theme="dark" /></>;
 }
 
-export default function App() { return <BrowserRouter><Experience /></BrowserRouter>; }
+export default function App() { return <BrowserRouter><Routes><Route path="/admin" element={<Admin />} /><Route path="*" element={<Experience />} /></Routes></BrowserRouter>; }

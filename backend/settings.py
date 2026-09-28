@@ -8,40 +8,36 @@ from models import PublicConfig, TaskConfig
 ENV_PATH = Path(__file__).parent / '.env'
 
 
+def environment_values():
+    return {**os.environ, **dotenv_values(ENV_PATH)}
+
+
 def checked_x_url(value):
     parsed = urlparse(value)
-    if parsed.scheme != 'https' or parsed.hostname not in {'x.com', 'www.x.com', 'twitter.com', 'www.twitter.com'}:
-        raise ValueError('X mission links must be HTTPS x.com or twitter.com links.')
+    if (parsed.scheme != 'https' or parsed.hostname not in {'x.com', 'www.x.com', 'twitter.com', 'www.twitter.com'}
+            or parsed.username or parsed.password or parsed.port not in {None, 443}
+            or any(character.isspace() or ord(character) < 32 for character in value) or '\\' in value):
+        raise ValueError('Bağlantı HTTPS ile başlayan bir x.com veya twitter.com adresi olmalıdır.')
     return value
 
 
-def public_config():
-    # Only explicitly allowlisted, public fields leave this function. .env changes
-    # to campaign copy/links are picked up on the next request, without exposing secrets.
-    values = {**os.environ, **dotenv_values(ENV_PATH)}
-    like_link = checked_x_url(values['X_LIKE_LINK'])
-    tasks = []
-    for key, title, action in [('follow', 'UPLINK', 'Follow'), ('like', 'SIGNAL', 'Like'),
-                               ('repost', 'RELAY', 'Repost'), ('comment', 'VOICE', 'Reply')]:
-        prefix = f'X_{key.upper()}'
-        url = checked_x_url(values[f'{prefix}_LINK'])
-        if key == 'repost':
-            # RELAY/Repost opens the same link as SIGNAL/Like.
-            url = like_link
-        if key == 'comment':
-            # VOICE/Reply opens the X post composer prefilled with the comment message;
-            # the like link is appended below the text via the intent url param.
-            parts = urlparse(checked_x_url(values['X_SHARE_LINK']))
-            query = {'text': values['X_COMMENT_MESSAGE'], 'url': like_link}
-            url = urlunparse(parts._replace(query=urlencode(query)))
-        tasks.append(TaskConfig(id=key, title=title, text=values[f'{prefix}_TEXT'], url=url, action=action))
+def public_config(campaign):
+    # Editable links/copy come ONLY from the persisted admin campaign.
+    # Environment values below are infrastructure and unchanged public labels.
+    values = environment_values()
+    composer = urlparse(checked_x_url(values['X_SHARE_LINK']))
+    reply_url = urlunparse(composer._replace(query=urlencode({
+        'text': campaign.reply_text, 'url': campaign.reply_url}), fragment=''))
+    urls = {'follow': checked_x_url(values['X_FOLLOW_LINK']), 'like': campaign.like_url,
+            'repost': campaign.repost_url, 'comment': reply_url}
+    tasks = [TaskConfig(id=key, title=title, text=values[f'X_{key.upper()}_TEXT'], url=urls[key], action=action)
+             for key, title, action in [('follow', 'UPLINK', 'Follow'), ('like', 'SIGNAL', 'Like'),
+                                       ('repost', 'RELAY', 'Repost'), ('comment', 'VOICE', 'Reply')]]
     origin = values['PUBLIC_APP_URL'].rstrip('/')
-    if urlparse(origin).scheme not in {'https', 'http'}:
+    if urlparse(origin).scheme not in {'https', 'http'} or not urlparse(origin).netloc:
         raise ValueError('PUBLIC_APP_URL must be an absolute HTTP(S) URL.')
-    # POST ON X composer: share text with the like link below it; the frontend
-    # appends the agent's referral link (PUBLIC_APP_URL/?ref=CODE) as the url param.
-    share_parts = urlparse(checked_x_url(values['X_SHARE_LINK']))
-    share_url = urlunparse(share_parts._replace(query=urlencode({'text': f"{values['X_SHARE_TEXT']}\n\n{like_link}"})))
+    share_url = urlunparse(composer._replace(query=urlencode({
+        'text': f'{campaign.claim_text}\n\n{campaign.like_url}'}), fragment=''))
     return PublicConfig(tasks=tasks, x_profile_url=checked_x_url(values['X_PROFILE_LINK']),
-                        comment_message=values['X_COMMENT_MESSAGE'], share_text=values['X_SHARE_TEXT'],
+                        comment_message=campaign.reply_text, share_text=campaign.claim_text,
                         share_url=share_url, public_url=origin)

@@ -49,7 +49,7 @@ def make_payload(handle: str, request_id: str | None = None, referred_by=None):
 
 
 # Module: public configuration and read APIs
-def test_config_returns_allowlisted_public_fields(api_client):
+def test_config_returns_allowlisted_public_fields(api_client, mongo_db):
     response = api_client.get(f"{BASE_URL}/api/config")
     assert response.status_code == 200
     data = response.json()
@@ -63,17 +63,20 @@ def test_config_returns_allowlisted_public_fields(api_client):
 
     like_task = next(task for task in data["tasks"] if task["id"] == "like")
     repost_task = next(task for task in data["tasks"] if task["id"] == "repost")
-    # RELAY/Repost opens the same link as SIGNAL/Like.
-    assert repost_task["url"] == like_task["url"]
+    # Each editable field is sourced exclusively from the saved admin campaign.
+    saved = mongo_db.campaign_settings.find_one({'_id': 'x-campaign'})['settings']
+    assert like_task['url'] == saved['like_url']
+    assert repost_task['url'] == saved['repost_url']
 
     comment_task = next(task for task in data["tasks"] if task["id"] == "comment")
     parsed = urlparse(comment_task["url"])
     query = parse_qs(parsed.query)
-    # VOICE/Reply opens the X post composer prefilled with the comment message and
-    # the like link appended below via the url param.
+    # VOICE/Reply has its own admin-controlled text and link.
     assert '/intent/post' in parsed.path
     assert query["text"][0] == data["comment_message"]
-    assert query["url"][0] == like_task["url"]
+    assert query["url"][0] == saved['reply_url']
+    assert data['comment_message'] == saved['reply_text']
+    assert data['share_text'] == saved['claim_text']
     assert len(data['comment_message']) > 0
     assert data['x_profile_url'] == 'https://x.com/LastZhood'
 

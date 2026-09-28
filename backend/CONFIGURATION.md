@@ -1,6 +1,18 @@
 # LastZhood kampanya ayarları
 
-`backend/.env` dosyasında takip, beğeni, RT ve yorum görevleri düzenlenir.
+## Yönetici paneli (güncel kaynak)
+
+`/admin` sayfasına yönetici şifresiyle girin. Like bağlantısı, Repost bağlantısı, Reply metni/bağlantısı ve CLAIM ON X paylaşım metni buradan değiştirilip **Kaydet** ile MongoDB `campaign_settings` koleksiyonuna yazılır. Bu beş alan yalnızca kaydedilmiş panel verisinden okunur; `.env` değişiklikleri bunları geçersiz kılamaz.
+
+- İlk başlangıçta yalnızca bir kez, mevcut aktif kampanya `.env` değerlerinden aktarılır. Önceki davranışı korumak için başlangıçta Like/Repost/Reply aynı Like bağlantısını alır. Sonra panelden bağımsız düzenlenebilir.
+- Like ve Repost kendi bağlantılarını açar. Reply, kendi metni ve altında kendi bağlantısıyla X post bestecisini açar.
+- CLAIM ON X / mevcut POST ON X düğmesi: paneldeki paylaşım metni + paneldeki Like bağlantısı + `PUBLIC_APP_URL/?ref=KOD`. Referans biçimi korunur.
+- `/api/config` her istekte MongoDB'deki kaydı okur. Açık ziyaretçi sayfası yeniden odaklanınca ayarları yeniler; yeni sayfa açılışlarında da güncel kayıt okunur. Backend yeniden başlatmak gerekmez.
+- Bağlantılar HTTPS x.com/twitter.com olmalıdır. Beş alan zorunludur. Ayarlar tek işlemde kaydedilir; eşzamanlı eski sürüm kaydı 409 ile reddedilir.
+
+## Sunucu yapılandırması
+
+Takip bağlantısı, görevlerin kısa açıklamaları, resmî X hesabı ve altyapı ayarları `.env` içinde kalır. Aşağıdaki kampanya değişkenleri panel kaydı yoksa **yalnızca ilk aktarım** için kullanılır; mevcut bir kaydı değiştirmez.
 
 | Değişken | Açıklama |
 | --- | --- |
@@ -13,13 +25,13 @@
 | X_SHARE_TEXT / X_SHARE_LINK | POST ON X paylaşım metni ve X paylaşım adresi (intent); metnin altına X_LIKE_LINK, en alta katılımcının referans bağlantısı (PUBLIC_APP_URL/?ref=KOD) eklenir |
 | PUBLIC_APP_URL | Kart ve referans bağlantılarının uygulama adresi |
 
-Görev bağlantı davranışı: SIGNAL (Like) X_LIKE_LINK'i açar; RELAY (Repost) da aynı X_LIKE_LINK'i açar; VOICE (Reply) X post bestecisini X_COMMENT_MESSAGE metniyle açar ve altına X_LIKE_LINK eklenir.
+`ADMIN_PASSWORD` ilk ve sonraki sunucu açılışlarında bcrypt ile hashlenir; MongoDB'de düz metin saklanmaz. Ortam şifresi değiştirilip sunucu yeniden başlatılırsa önceki oturumlar iptal olur. `JWT_SECRET` rastgele en az 32 karakter olmalıdır. `CORS_ORIGINS` erişime izin verilen tam site origin'lerini virgülle ayırarak içermeli; `*` kullanılmamalı. Önizleme ve gerçek site origin'leri mevcut listede ayrı ayrı tanımlıdır.
 
 Resmî hesap `https://x.com/LastZhood` olarak ayarlanmıştır. Kullanıcı belirli bir gönderi bağlantısı vermediği ve X gönderileri herkese açık taramada okunamadığı için beğeni, RT ve yorum görevleri bu profili açar. Katılımcılar bir LastZhood gönderisi üzerinde işlemlerini tamamlayıp beyan eder. Eski projenin gönderi bağlantıları kaldırılmıştır.
 
-Belirli bir kampanya gönderisini hedeflemek için `X_LIKE_LINK`, `X_REPOST_LINK`, `X_COMMENT_LINK` alanlarını güncelleyin. Bağlantılar HTTPS ve x.com/twitter.com alan adında olmalıdır. Beğeni için `/intent/like?tweet_id=GONDERI_ID`, RT için `/intent/retweet?tweet_id=GONDERI_ID`, yorum için `/intent/post?in_reply_to=GONDERI_ID` biçimleri kullanılabilir. Yorum intent bağlantısında `.env` mesajı otomatik doldurulur. Profil/doğrudan gönderi bağlantısında katılımcı `Copy reply` düğmesiyle aynı mesajı kopyalayabilir.
+Belirli bir gönderiyi hedeflemek için `/admin` panelindeki ilgili bağlantıyı düzenleyin. Reply alanındaki bağlantı hedef gönderiye doğrudan yanıt atmak yerine paylaşım metninin altına eklenir; önceki istenen akış korunmuştur.
 
-Kampanya ayarları sonraki API isteğinde dosyadan okunur. Tarayıcıyı yenilemek yeterlidir. MONGO_URL, DB_NAME ve frontend REACT_APP_BACKEND_URL değerlerini değiştirmeyin.
+MONGO_URL, DB_NAME ve frontend REACT_APP_BACKEND_URL değerlerini değiştirmeyin. Giriş oturumları HttpOnly/Secure çerezlerle yönetilir; logout MongoDB oturumunu da iptal eder. Yönetici yazma istekleri Origin doğrulaması gerektirir. Beş başarısız denemeden sonra 15 dakikalık pencere sınırı vardır.
 
 Kullanıcı adı ve görev tamamlama kullanıcı beyanıdır; X hesabı sahipliği, gerçek takip/RT/yorum veya paylaşım doğrulanmaz. Cüzdan yalnızca EVM adresi olarak saklanır; özel anahtar, cüzdan bağlantısı veya işlem imzası istenmez. Cüzdan adresi herkese açık API yanıtlarına dahil edilmez.
 

@@ -12,6 +12,9 @@ from motor.motor_asyncio import AsyncIOMotorClient
 load_dotenv(Path(__file__).parent / '.env')
 from registry import router
 from settings import public_config
+from campaign import seed_campaign, get_campaign
+from admin import router as admin_router
+from admin_security import seed_admin
 from x_avatar import router as x_avatar_router
 from avatar_provider import TIMEOUT, UA
 
@@ -22,7 +25,9 @@ db = client[os.environ['DB_NAME']]
 
 @asynccontextmanager
 async def lifespan(app):
-    public_config()
+    await seed_campaign(db)
+    public_config((await get_campaign(db)).settings)
+    await seed_admin(db)
     await db.agents.create_index('handle_key', unique=True)
     await db.agents.create_index('ref_code', unique=True)
     await db.agents.create_index('request_id', unique=True)
@@ -41,13 +46,22 @@ async def lifespan(app):
 app = FastAPI(title='LastZhood Survivor Registry', lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.environ['CORS_ORIGINS'].split(','),
-    allow_credentials=False,
-    allow_methods=['GET', 'POST'],
+    allow_origins=[origin.strip().rstrip('/') for origin in os.environ['CORS_ORIGINS'].split(',')],
+    allow_credentials=True,
+    allow_methods=['GET', 'POST', 'PUT'],
     allow_headers=['Content-Type'],
 )
 app.include_router(router, prefix='/api')
 app.include_router(x_avatar_router, prefix='/api')
+app.include_router(admin_router, prefix='/api')
+
+
+@app.middleware('http')
+async def private_settings_cache(request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith('/api/admin') or request.url.path == '/api/config':
+        response.headers['Cache-Control'] = 'no-store'
+    return response
 
 
 @app.get('/api/')

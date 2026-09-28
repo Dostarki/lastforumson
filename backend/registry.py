@@ -10,6 +10,7 @@ from pymongo.errors import DuplicateKeyError
 
 from models import AgentPublic, ParticipationCreate, PublicConfig, RegistryStats
 from settings import public_config
+from campaign import get_campaign
 
 router = APIRouter()
 PUBLIC_FIELDS = {key: 1 for key in AgentPublic.model_fields}
@@ -17,9 +18,9 @@ PUBLIC_FIELDS['_id'] = 0
 
 
 @router.get('/config', response_model=PublicConfig)
-async def config():
+async def config(request: Request):
     try:
-        return public_config()
+        return public_config((await get_campaign(request.app.state.db)).settings)
     except (ValueError, KeyError, TypeError):
         logging.exception('Invalid campaign configuration')
         raise HTTPException(503, 'Mission settings are unavailable. Please try again later.')
