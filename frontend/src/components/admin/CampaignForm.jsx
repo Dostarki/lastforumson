@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Check, Circle, Loader2, RotateCcw, Save } from 'lucide-react';
 import { Button } from '../ui/button';
 import { CampaignFields } from './CampaignFields';
-import { adminError, adminRequest } from '../../lib/adminApi';
+import { adminError, adminRequest, isAdminAuthError } from '../../lib/adminApi';
 import { toast } from '../ui/sonner';
 
 export const CampaignForm = ({ initial, onSessionExpired, onDirtyChange }) => {
@@ -20,7 +20,7 @@ export const CampaignForm = ({ initial, onSessionExpired, onDirtyChange }) => {
   }, [dirty, onDirtyChange]);
   const handleError = failure => {
     setError(adminError(failure));
-    if (failure.response?.status === 401) onSessionExpired();
+    if (isAdminAuthError(failure)) onSessionExpired();
     setConflict(failure.response?.status === 409);
   };
   const save = async event => {

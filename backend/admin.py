@@ -7,7 +7,7 @@ from pymongo import ReturnDocument
 from starlette.concurrency import run_in_threadpool
 
 from admin_security import (ACCESS_SECONDS, clear_cookies, issue_session, require_admin,
-                            require_origin, reserve_login_attempt, session_from_cookie,
+                            require_admin_client, reserve_login_attempt, session_from_cookie,
                             set_token_cookie, token_for)
 from campaign import CAMPAIGN_ID, CampaignResponse, CampaignUpdate, get_campaign
 
@@ -30,7 +30,11 @@ class AuthResponse(BaseModel):
     authenticated: bool
 
 
-@router.post('/login', response_model=AuthResponse, dependencies=[Depends(require_origin)])
+class LoginResponse(AuthResponse):
+    csrf_token: str
+
+
+@router.post('/login', response_model=LoginResponse, dependencies=[Depends(require_admin_client)])
 async def login(payload: LoginPayload, request: Request, response: Response):
     db = request.app.state.db
     identifier = await reserve_login_attempt(request)
@@ -39,8 +43,8 @@ async def login(payload: LoginPayload, request: Request, response: Response):
     if not valid:
         raise HTTPException(401, 'Şifre yanlış. Lütfen tekrar deneyin.')
     await db.admin_login_attempts.delete_one({'_id': identifier})
-    await issue_session(db, response)
-    return AuthResponse(authenticated=True)
+    proof = await issue_session(db, response)
+    return LoginResponse(authenticated=True, csrf_token=proof)
 
 
 @router.get('/me', response_model=AuthResponse, dependencies=[Depends(require_admin)])
@@ -48,23 +52,26 @@ async def me():
     return AuthResponse(authenticated=True)
 
 
-@router.post('/refresh', response_model=AuthResponse, dependencies=[Depends(require_origin)])
+@router.post('/refresh', response_model=AuthResponse)
 async def refresh(request: Request, response: Response):
     session_id = await session_from_cookie(request, 'refresh')
     set_token_cookie(response, 'access_token', token_for(session_id, 'access', ACCESS_SECONDS), ACCESS_SECONDS)
     return AuthResponse(authenticated=True)
 
 
-@router.post('/logout', response_model=AuthResponse, dependencies=[Depends(require_origin)])
+@router.post('/logout', response_model=AuthResponse)
 async def logout(request: Request, response: Response):
     # Revoke even when the short-lived access cookie has expired.
     for kind in ('refresh', 'access'):
         try:
             session_id = await session_from_cookie(request, kind)
             await request.app.state.db.admin_sessions.delete_one({'session_id': session_id})
+            break
         except HTTPException as error:
             if error.status_code != 401:
                 raise
+    else:
+        raise HTTPException(401, 'Oturum sona erdi. Lütfen tekrar giriş yapın.')
     clear_cookies(response)
     return AuthResponse(authenticated=False)
 
@@ -75,7 +82,7 @@ async def read_settings(request: Request):
 
 
 @router.put('/settings', response_model=CampaignResponse,
-            dependencies=[Depends(require_origin), Depends(require_admin)])
+            dependencies=[Depends(require_admin)])
 async def save_settings(payload: CampaignUpdate, request: Request):
     document = await request.app.state.db.campaign_settings.find_one_and_update(
         {'_id': CAMPAIGN_ID, 'revision': payload.revision},

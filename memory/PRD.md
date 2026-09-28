@@ -72,8 +72,8 @@ Tasarım renk konusuna gelirsek eğer daha böyle project zomboid oyun tarzı ol
 3. Askerî radar: https://static.prod-images.emergentagent.com/jobs/a2dcf251-5c25-48b6-bb5b-fcddb74891ae/images/c9cae18d6079489b15507949c8af294fb5a9048846f31441f8c714d0df2fbf71.jpeg
 
 ## Önceliklendirilmiş kalan işler
-- P0: Yok; şifreli admin paneli dahil istenen akışlar tamamlandı ve doğrulandı.
-- P1: Kullanıcının `/admin` paneline girip gerçek kampanya bağlantılarını/metinlerini kaydederek kendi kontrolünü yapması; kullanıcı doğrulaması bekleniyor.
+- P0: **Canlı lastzhood.fun/admin eski kodu sunuyor ve kaynak reddi hatası devam ediyor.** Kaynak-bağımsız güvenli giriş düzeltmesi çalışma alanı/önizlemede tamamlandı ve test ajanı doğruladı; canlı alan adına aynı backend/frontend sürümünün uygulanması ve tekrar canlı test gerekli. Canlı hostu güncelleme erişimi bu oturumda doğrulanamadı.
+- P1: Canlı sürüm eşitlendikten sonra kullanıcının `/admin` paneline girip bağlantıları/metinleri kaydederek kontrolü.
 - P2 (henüz istenmedi): Panelde paylaşım önizlemesi ve şifre değiştirme; referans davet sıralaması; dil seçimi.
 
 ## X profil fotoğrafı — 2026-07-19
@@ -145,3 +145,13 @@ Onay: "Evet sadece admin panelden çekecek o bilgileri."
 - Masaüstü 1920×800 ve mobil 390×844 görüntülendi, yatay taşma yok. Test ajanı 320/768/1024/1440 genişlik ölçümlerini de geçti. `yarn build` başarılı.
 - Test kayıtları temizlendi ve özgün kampanya değerleri korundu. Üretim akışında MOCK yok; testlerin hata senaryolarında kontrollü yanıtlar kullanıldı. X'te gerçek sosyal işlem yapılmadı; kullanıcı beyanı modeli değişmedi.
 - Kapanış doğrulama: `test_reports/admin_final_verification.md`. Bilinen açık çekirdek hata yok; kullanıcının panel denemesi bekleniyor.
+
+## Admin kaynak hatası — 2026-09-28 (önizleme düzeltildi, canlı sürüm bekliyor)
+- Yeni kullanıcı bildirimi: "Bu kaynaktan yapılan isteğe izin verilmiyor. diyor bunu düzelt her kaynaktan izin verilsin". Onay: "evet tamamen lastzhood.fun için".
+- Kullanıcı alan adı `https://lastzhood.fun/admin` okunarak aynı hata uygulama öncesinde yeniden üretildi. Sabit `require_origin` üyelik kontrolü kaldırıldı; `CORS_ORIGINS=*` için credentialed CORS yanıtı HTTP(S) kaynakları regex ile tek tek yansıtır. Eksik Origin ile nonbrowser API çağrıları da çalışır; web `Origin:null` CORS kapsamı dışıdır.
+- Şifre/oturum güvenliği korundu: başarılı şifre girişinde oluşturulan rastgele CSRF kanıtı yalnızca giriş cevabında; hash'i MongoDB `admin_sessions.csrf_hash` içinde. Tüm yönetici GET/PUT/refresh/logout çağrıları HttpOnly JWT çerezine ek `X-CSRF-Token` ister. Giriş JSON + `X-Admin-Client` ister. Kanıt sekme/origin ayrımlı sessionStorage'da; parola ve JWT'ler istemci depolamasına konulmaz. Eski/kanıtsız oturumlar normal girişe döner; 401/403 arayüzde yeniden girişle toparlanır.
+- Değişen kod: `backend/{admin_security,admin,server}.py`, `frontend/src/lib/adminApi.js`, `pages/Admin.jsx`, `components/admin/CampaignForm.jsx`. `.env` CORS_ORIGINS=*; mevcut şifre, MONGO_URL, DB_NAME ve REACT_APP_BACKEND_URL değişmedi. Test kullanım bilgileri memory/test_credentials.md güncel.
+- **Test ajanı iteration_5.json:** önizlemede **34/34 backend testi** geçti; lastzhood.fun, www, rastgele HTTPS kaynak ve kaynak başlığı olmadan giriş; CORS başlıkları, çerez+kanıt, güvenli refresh/logout, deneme sınırı, legacy oturum reddi, kayıt/değişiklik geri yükleme, yeniden yükleme ve mobil akış doğrulandı. Üretim API'si MOCK değil.
+- Son frontend build başarılı: `test_reports/admin-origin-build.log`, paket `main.69070154.js`. Masaüstü1920×800 ve mobil390×844 taşma yok.
+- **Çözülmemiş canlı durum:** test ajanı lastzhood.fun üzerinde hâlâ `main.da706165.js` eski paketi, giriş ekranı yerine eski kaynak hatasını, eski `/api/admin/login` 403 yanıtını ve yeni başlıkları desteklemeyen preflight yanıtını tespit etti. Önizlemede düzelmiş olması canlı alan adında düzelme anlamına gelmez.
+- Yerel yayın uygunluk kontrolünde kod/ortam engeli bulunmadı; kontrol aracı canlı hostu değiştirmedi ve sürüm eşitlemesi yapmadı. Canlı sürümün güncellenmesi için gereken erişim/işlem bu oturumda mevcut değil. Sonraki adım: aynı backend+frontend sürümünü canlı alan adına uygulamak ve canlı login/read/logout akışını test ajanıyla tekrar doğrulamak.

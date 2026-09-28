@@ -31,7 +31,7 @@
   "authentication": {
     "type": "Password-only",
     "credential_source": "backend/.env ADMIN_PASSWORD; bcrypt hash in MongoDB",
-    "session": "HttpOnly Secure cookies with revocable MongoDB sessions; no local/sessionStorage tokens",
+    "session": "JWTs in HttpOnly Secure cookies with revocable MongoDB sessions; CSRF proof only in origin/tab-scoped sessionStorage",
     "login_flow": "If session is missing or invalid, show password-only login within board-shell"
   },
   "admin_fields": [
@@ -76,18 +76,18 @@
       "method": "POST",
       "path": "/api/admin/login",
       "payload": "{ \"password\": \"string\" }",
-      "response": "{ \"authenticated\": true }; HttpOnly cookies"
+      "response": "{ \"authenticated\": true, \"csrf_token\": \"session proof\" }; HttpOnly cookies; requires JSON + X-Admin-Client"
     },
     "get_config": {
       "method": "GET",
       "path": "/api/admin/settings",
-      "credentials": "include (HttpOnly cookies)",
+      "credentials": "include (HttpOnly cookies) + X-CSRF-Token",
       "response": "{ settings: {like_url, repost_url, reply_text, reply_url, claim_text}, revision, updated_at }"
     },
     "save_config": {
       "method": "PUT",
       "path": "/api/admin/settings",
-      "credentials": "include (HttpOnly cookies); validated Origin",
+      "credentials": "include (HttpOnly cookies) + X-CSRF-Token; HTTP(S) origin-independent",
       "payload": "{ like_url, repost_url, reply_text, reply_url, claim_text, revision }",
       "response": "{ settings, revision, updated_at }"
     }

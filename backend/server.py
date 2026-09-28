@@ -44,12 +44,17 @@ async def lifespan(app):
 
 
 app = FastAPI(title='LastZhood Survivor Registry', lifespan=lifespan)
+cors_origins = [origin.strip().rstrip('/') for origin in os.environ['CORS_ORIGINS'].split(',')]
+# Reflect concrete HTTP(S) origins when wildcard mode is configured. Sending
+# ACAO '*' with credentials would still block cookie login in browsers.
+cors_any_origin = '*' in cors_origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[origin.strip().rstrip('/') for origin in os.environ['CORS_ORIGINS'].split(',')],
+    allow_origins=[] if cors_any_origin else cors_origins,
+    allow_origin_regex=r'^https?://[^/\s]+$' if cors_any_origin else None,
     allow_credentials=True,
     allow_methods=['GET', 'POST', 'PUT'],
-    allow_headers=['Content-Type'],
+    allow_headers=['Content-Type', 'X-Admin-Client', 'X-CSRF-Token'],
 )
 app.include_router(router, prefix='/api')
 app.include_router(x_avatar_router, prefix='/api')

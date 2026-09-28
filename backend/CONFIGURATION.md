@@ -25,13 +25,19 @@ Takip bağlantısı, görevlerin kısa açıklamaları, resmî X hesabı ve alty
 | X_SHARE_TEXT / X_SHARE_LINK | POST ON X paylaşım metni ve X paylaşım adresi (intent); metnin altına X_LIKE_LINK, en alta katılımcının referans bağlantısı (PUBLIC_APP_URL/?ref=KOD) eklenir |
 | PUBLIC_APP_URL | Kart ve referans bağlantılarının uygulama adresi |
 
-`ADMIN_PASSWORD` ilk ve sonraki sunucu açılışlarında bcrypt ile hashlenir; MongoDB'de düz metin saklanmaz. Ortam şifresi değiştirilip sunucu yeniden başlatılırsa önceki oturumlar iptal olur. `JWT_SECRET` rastgele en az 32 karakter olmalıdır. `CORS_ORIGINS` erişime izin verilen tam site origin'lerini virgülle ayırarak içermeli; `*` kullanılmamalı. Önizleme ve gerçek site origin'leri mevcut listede ayrı ayrı tanımlıdır.
+`ADMIN_PASSWORD` ilk ve sonraki sunucu açılışlarında bcrypt ile hashlenir; MongoDB'de düz metin saklanmaz. Ortam şifresi değiştirilip sunucu yeniden başlatılırsa önceki oturumlar iptal olur. `JWT_SECRET` rastgele en az 32 karakter olmalıdır.
+
+### Kaynak bağımsız admin girişi (2026-09-28)
+
+`CORS_ORIGINS="*"` artık desteklenir: sunucu herhangi bir HTTP(S) web kaynağı için somut Origin değerini döndürür. Çerezli isteklerle birlikte geçersiz `Access-Control-Allow-Origin: *` yanıtı kullanılmaz. lastzhood.fun, www ve önizleme adresleri için tek tek izin kaydı gerekmez. İstenirse virgülle ayrılmış açık CORS listesi de kullanılabilir; admin API'sinde ayrıca bir kaynak engeli yoktur.
+
+Güvenlik için giriş application/json ve `X-Admin-Client: lastzhood-admin` gerektirir. Şifre doğrulandıktan sonra cevapta bir `csrf_token` döner; bunun yalnızca SHA256 özeti MongoDB oturumuna yazılır. Arayüz bu kanıtı origin/sekme bağımsız `sessionStorage` içinde tutar ve tüm yönetici okuma/yazma, refresh ve logout çağrılarına `X-CSRF-Token` olarak ekler. JWT çerezleri HttpOnly kalır. Yalnızca çerez taşıyan yabancı site istekleri yetki alamaz; kanıtı şifresiz veren bir uç nokta yoktur. Eski çerez oturumları veya yeni sekme normal şifreli girişe döner; önbellek temizleme gerekmez.
 
 Resmî hesap `https://x.com/LastZhood` olarak ayarlanmıştır. Kullanıcı belirli bir gönderi bağlantısı vermediği ve X gönderileri herkese açık taramada okunamadığı için beğeni, RT ve yorum görevleri bu profili açar. Katılımcılar bir LastZhood gönderisi üzerinde işlemlerini tamamlayıp beyan eder. Eski projenin gönderi bağlantıları kaldırılmıştır.
 
 Belirli bir gönderiyi hedeflemek için `/admin` panelindeki ilgili bağlantıyı düzenleyin. Reply alanındaki bağlantı hedef gönderiye doğrudan yanıt atmak yerine paylaşım metninin altına eklenir; önceki istenen akış korunmuştur.
 
-MONGO_URL, DB_NAME ve frontend REACT_APP_BACKEND_URL değerlerini değiştirmeyin. Giriş oturumları HttpOnly/Secure çerezlerle yönetilir; logout MongoDB oturumunu da iptal eder. Yönetici yazma istekleri Origin doğrulaması gerektirir. Beş başarısız denemeden sonra 15 dakikalık pencere sınırı vardır.
+MONGO_URL, DB_NAME ve frontend REACT_APP_BACKEND_URL değerlerini değiştirmeyin. Giriş oturumları HttpOnly/Secure çerez ve oturuma bağlı CSRF kanıtıyla yönetilir; logout MongoDB oturumunu da iptal eder. Beş başarısız denemeden sonra 15 dakikalık pencere sınırı vardır.
 
 Kullanıcı adı ve görev tamamlama kullanıcı beyanıdır; X hesabı sahipliği, gerçek takip/RT/yorum veya paylaşım doğrulanmaz. Cüzdan yalnızca EVM adresi olarak saklanır; özel anahtar, cüzdan bağlantısı veya işlem imzası istenmez. Cüzdan adresi herkese açık API yanıtlarına dahil edilmez.
 

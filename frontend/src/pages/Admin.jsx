@@ -6,7 +6,7 @@ import { Toaster } from '../components/ui/sonner';
 import { MapAtmosphere } from '../components/MapAtmosphere';
 import { AdminLogin } from '../components/admin/AdminLogin';
 import { CampaignForm } from '../components/admin/CampaignForm';
-import { adminApi, adminError, adminRequest } from '../lib/adminApi';
+import { adminApi, adminError, adminRequest, isAdminAuthError, setAdminProof } from '../lib/adminApi';
 import '../admin.css';
 
 export default function Admin() {
@@ -21,14 +21,17 @@ export default function Admin() {
       const { data } = await adminRequest('get', '/settings');
       setInitial(data); setState('authenticated');
     } catch (failure) {
-      if (failure.response?.status === 401) setState('login');
+      if (isAdminAuthError(failure)) setState('login');
       else { setError(adminError(failure)); setState('error'); }
     }
   }, []);
   useEffect(() => { load(); }, [load]);
   const login = async password => {
     setPending(true); setError('');
-    try { await adminApi.post('/login', { password }); await load(); }
+    try {
+      const { data } = await adminApi.post('/login', { password });
+      setAdminProof(data.csrf_token); await load();
+    }
     catch (failure) { setError(adminError(failure)); }
     finally { setPending(false); }
   };
@@ -36,8 +39,11 @@ export default function Admin() {
   const logout = async () => {
     if (!canLeave()) return;
     setPending(true); setError('');
-    try { await adminApi.post('/logout'); setInitial(null); setDirty(false); setState('login'); }
-    catch (failure) { setError(adminError(failure)); }
+    try { await adminApi.post('/logout'); setAdminProof(''); setInitial(null); setDirty(false); setState('login'); }
+    catch (failure) {
+      if (isAdminAuthError(failure)) { setAdminProof(''); setInitial(null); setDirty(false); setState('login'); }
+      else setError(adminError(failure));
+    }
     finally { setPending(false); }
   };
   return <div className="board-shell admin-shell" lang="tr" data-testid="admin-page">
