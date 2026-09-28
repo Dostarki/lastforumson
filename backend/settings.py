@@ -19,21 +19,28 @@ def public_config():
     # Only explicitly allowlisted, public fields leave this function. .env changes
     # to campaign copy/links are picked up on the next request, without exposing secrets.
     values = {**os.environ, **dotenv_values(ENV_PATH)}
+    like_link = checked_x_url(values['X_LIKE_LINK'])
     tasks = []
     for key, title, action in [('follow', 'UPLINK', 'Follow'), ('like', 'SIGNAL', 'Like'),
                                ('repost', 'RELAY', 'Repost'), ('comment', 'VOICE', 'Reply')]:
         prefix = f'X_{key.upper()}'
         url = checked_x_url(values[f'{prefix}_LINK'])
+        if key == 'repost':
+            # RELAY/Repost opens the same link as SIGNAL/Like.
+            url = like_link
         if key == 'comment':
-            # VOICE/Reply opens the X post composer prefilled with the share text;
-            # the repost link is appended below the text via the intent url param.
-            parts = urlparse('https://x.com/intent/post')
-            query = {'text': values['X_SHARE_TEXT'], 'url': checked_x_url(values['X_REPOST_LINK'])}
+            # VOICE/Reply opens the X post composer prefilled with the comment message;
+            # the like link is appended below the text via the intent url param.
+            parts = urlparse(checked_x_url(values['X_SHARE_LINK']))
+            query = {'text': values['X_COMMENT_MESSAGE'], 'url': like_link}
             url = urlunparse(parts._replace(query=urlencode(query)))
         tasks.append(TaskConfig(id=key, title=title, text=values[f'{prefix}_TEXT'], url=url, action=action))
     origin = values['PUBLIC_APP_URL'].rstrip('/')
     if urlparse(origin).scheme not in {'https', 'http'}:
         raise ValueError('PUBLIC_APP_URL must be an absolute HTTP(S) URL.')
+    # POST ON X composer: share text with only the like link below it.
+    share_parts = urlparse(checked_x_url(values['X_SHARE_LINK']))
+    share_url = urlunparse(share_parts._replace(query=urlencode({'text': values['X_SHARE_TEXT'], 'url': like_link})))
     return PublicConfig(tasks=tasks, x_profile_url=checked_x_url(values['X_PROFILE_LINK']),
                         comment_message=values['X_COMMENT_MESSAGE'], share_text=values['X_SHARE_TEXT'],
-                        share_url=checked_x_url(values['X_SHARE_LINK']), public_url=origin)
+                        share_url=share_url, public_url=origin)

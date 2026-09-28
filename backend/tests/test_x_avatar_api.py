@@ -89,15 +89,29 @@ def test_nasa_avatar_proxy_headers_and_png_dimensions(api_client):
     assert image.size == (400, 400)
 
 
-def test_lastzhood_default_avatar_falls_back_to_unavailable(api_client):
+def test_lastzhood_avatar_state_and_missing_account_fallback(api_client):
+    # Live account: response shape stays valid whether or not a custom photo exists.
     response = api_client.get(f'{BASE_URL}/api/x/profile/LastZhood', timeout=20)
     assert response.status_code == 200
     data = response.json()
     assert data['handle'] == 'lastzhood'
-    assert data['status'] == 'unavailable'
-    assert data['avatar_path'] is None
-    assert data['source'] is None
+    assert data['status'] in ('available', 'unavailable')
     assert data['ownership_verified'] is False
+    if data['status'] == 'available':
+        assert data['avatar_path'] == '/api/x/avatar/lastzhood'
+        assert data['source'] == 'fxtwitter'
+    else:
+        assert data['avatar_path'] is None
+        assert data['source'] is None
+
+    # A handle that cannot exist still falls back to unavailable.
+    missing = api_client.get(f'{BASE_URL}/api/x/profile/zz_noacct_99x', timeout=20)
+    assert missing.status_code == 200
+    unavailable = missing.json()
+    assert unavailable['status'] == 'unavailable'
+    assert unavailable['avatar_path'] is None
+    assert unavailable['source'] is None
+    assert unavailable['ownership_verified'] is False
 
 
 def test_invalid_handle_rejected_on_profile_and_avatar(api_client):

@@ -61,17 +61,28 @@ def test_config_returns_allowlisted_public_fields(api_client):
     task_ids = {task["id"] for task in data["tasks"]}
     assert task_ids == {"follow", "like", "repost", "comment"}
 
+    like_task = next(task for task in data["tasks"] if task["id"] == "like")
+    repost_task = next(task for task in data["tasks"] if task["id"] == "repost")
+    # RELAY/Repost opens the same link as SIGNAL/Like.
+    assert repost_task["url"] == like_task["url"]
+
     comment_task = next(task for task in data["tasks"] if task["id"] == "comment")
     parsed = urlparse(comment_task["url"])
     query = parse_qs(parsed.query)
-    # VOICE/Reply opens the X post composer prefilled with the share text and
-    # the repost link appended below via the url param.
+    # VOICE/Reply opens the X post composer prefilled with the comment message and
+    # the like link appended below via the url param.
     assert '/intent/post' in parsed.path
-    assert query["text"][0] == data["share_text"]
-    repost_task = next(task for task in data["tasks"] if task["id"] == "repost")
-    assert query["url"][0] == repost_task["url"]
+    assert query["text"][0] == data["comment_message"]
+    assert query["url"][0] == like_task["url"]
     assert len(data['comment_message']) > 0
     assert data['x_profile_url'] == 'https://x.com/LastZhood'
+
+    # POST ON X composer carries the share text with only the like link below it.
+    share_parsed = urlparse(data["share_url"])
+    share_query = parse_qs(share_parsed.query)
+    assert '/intent/post' in share_parsed.path
+    assert share_query["text"][0] == data["share_text"]
+    assert share_query["url"][0] == like_task["url"]
 
     response_text = response.text.lower()
     assert "mongo_url" not in response_text

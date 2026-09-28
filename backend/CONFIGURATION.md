@@ -10,8 +10,10 @@
 | X_REPOST_TEXT / X_REPOST_LINK | RT görevinin metni ve bağlantısı |
 | X_COMMENT_TEXT / X_COMMENT_LINK | Yorum görevinin görünen metni ve yanıt bağlantısı |
 | X_COMMENT_MESSAGE | X yorum penceresinde önceden yazılan mesaj |
-| X_SHARE_TEXT / X_SHARE_LINK | Tamamlanan ajan kaydının paylaşım metni ve X paylaşım adresi |
+| X_SHARE_TEXT / X_SHARE_LINK | POST ON X paylaşım metni ve X paylaşım adresi (intent); metnin altına yalnızca X_LIKE_LINK eklenir |
 | PUBLIC_APP_URL | Kart ve referans bağlantılarının uygulama adresi |
+
+Görev bağlantı davranışı: SIGNAL (Like) X_LIKE_LINK'i açar; RELAY (Repost) da aynı X_LIKE_LINK'i açar; VOICE (Reply) X post bestecisini X_COMMENT_MESSAGE metniyle açar ve altına X_LIKE_LINK eklenir.
 
 Resmî hesap `https://x.com/LastZhood` olarak ayarlanmıştır. Kullanıcı belirli bir gönderi bağlantısı vermediği ve X gönderileri herkese açık taramada okunamadığı için beğeni, RT ve yorum görevleri bu profili açar. Katılımcılar bir LastZhood gönderisi üzerinde işlemlerini tamamlayıp beyan eder. Eski projenin gönderi bağlantıları kaldırılmıştır.
 

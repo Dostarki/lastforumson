@@ -101,3 +101,11 @@ Tasarım renk konusuna gelirsek eğer daha böyle project zomboid oyun tarzı ol
 ## Repo yeniden kurulumu — 2026-09-28
 - https://github.com/Dostarki/lastform reposu /app dizinine kopyalandı; backend/.env (MongoDB + X kampanya değişkenleri + FxTwitter avatar ayarları) yeniden oluşturuldu.
 - Doğrulama: GET /api/, /api/config, /api/agents/stats çalışıyor; ana sayfa 1920x800 ve 390x844 ekran görüntüleri sorunsuz. MongoDB boş başladı (count: 0).
+
+
+## Görev bağlantı davranışı güncellemesi — 2026-09-28
+- Kullanıcı isteği: Like ve Repost butonları X_LIKE_LINK'e gitsin; Reply, X_COMMENT_MESSAGE + altında X_LIKE_LINK açsın; POST ON X yalnızca tek link (X_LIKE_LINK) içersin, ajan/ref linkleri kaldırıldı.
+- settings.py: repost görevi X_LIKE_LINK kullanıyor; comment intent'i text=X_COMMENT_MESSAGE ve url=X_LIKE_LINK; share_url backend'de intent/post?text=X_SHARE_TEXT&url=X_LIKE_LINK olarak kuruluyor.
+- Frontend lib/api.js shareUrl artık config.share_url değerini doğrudan döndürüyor; ajan ve ref linkleri paylaşım metninden kaldırıldı.
+- Testler güncellendi: repost==like linki, comment text==comment_message ve url==like linki, share_url tek url paramı doğrulanıyor; 20/20 pytest geçti.
+- Avatar testi güncellendi: @LastZhood artık özel profil fotoğrafına sahip; test canlı hesap durumunu (available/unavailable) ve var olmayan handle fallback'ini doğruluyor.
